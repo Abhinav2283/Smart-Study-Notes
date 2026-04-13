@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Study Notes App</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:sans-serif;background:#f3f4f6;height:100vh;display:flex;align-items:center;justify-content:center;}
+.app{display:flex;width:100%;max-width:1100px;height:600px;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 24px #0001;}
+.sidebar{width:220px;min-width:220px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;}
+.sidebar-top{padding:12px;border-bottom:1px solid #e5e7eb;}
+.sidebar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.sidebar-title{font-weight:600;font-size:14px;color:#111;}
+.tabs{display:flex;border-radius:6px;overflow:hidden;border:1px solid #e5e7eb;margin-bottom:8px;}
+.tab-btn{flex:1;padding:5px;font-size:11px;border:none;cursor:pointer;background:transparent;color:#6b7280;}
+.tab-btn.active{background:#f3f4f6;font-weight:600;color:#111;}
+.tab-btn.premium.active{background:#fef3c7;color:#92400e;}
+input[type=text],input[type=email],input[type=password],textarea{outline:none;font-family:sans-serif;}
+.search{width:100%;padding:5px 8px;font-size:12px;border-radius:6px;border:1px solid #e5e7eb;background:#f9fafb;color:#111;}
+.note-list{overflow-y:auto;flex:1;padding:6px 0;}
+.subj-label{padding:4px 12px;font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;}
+.note-item{padding:7px 12px;cursor:pointer;border-left:2px solid transparent;display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.note-item:hover{background:#f9fafb;}
+.note-item.active{background:#f3f4f6;border-left-color:#3b82f6;}
+.note-item.locked{opacity:.55;cursor:default;}
+.note-name{font-size:12px;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.note-date{font-size:10px;color:#9ca3af;}
+.del-btn{background:none;border:none;color:#d1d5db;cursor:pointer;font-size:14px;padding:1px 4px;flex-shrink:0;}
+.del-btn:hover{color:#ef4444;}
+.sidebar-bottom{padding:8px 10px;border-top:1px solid #e5e7eb;display:flex;gap:5px;}
+.btn{border:none;border-radius:6px;cursor:pointer;font-size:11px;padding:5px 10px;font-weight:500;}
+.btn-admin{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;}
+.btn-premium-req{background:#fef3c7;color:#92400e;}
+.btn-info{background:#eff6ff;color:#1d4ed8;}
+.btn-success{background:#d1fae5;color:#065f46;}
+.btn-danger{background:#fee2e2;color:#991b1b;}
+.btn-warning{background:#fef3c7;color:#92400e;}
+.btn-save{background:#d1fae5;color:#065f46;border:none;border-radius:6px;cursor:pointer;font-size:11px;padding:5px 12px;font-weight:600;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.toolbar{padding:8px 14px;border-bottom:1px solid #e5e7eb;background:#fff;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.toolbar-btn{background:none;border:1px solid #e5e7eb;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;color:#374151;}
+.toolbar-btn.active{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;}
+.color-dot{width:13px;height:13px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;}
+.color-dot.active{border-color:#111;}
+.content-area{flex:1;display:flex;overflow:hidden;}
+.note-content{flex:1;overflow-y:auto;padding:18px 22px;}
+.note-title-disp{font-size:18px;font-weight:600;color:#111;margin-bottom:4px;}
+.note-meta{font-size:11px;color:#9ca3af;margin-bottom:14px;}
+.note-body{font-size:13px;line-height:1.9;color:#374151;}
+.badge-premium{font-size:10px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:600;vertical-align:middle;margin-left:6px;}
+.edit-input{font-size:18px;font-weight:600;border:none;border-bottom:1px solid #e5e7eb;background:transparent;color:#111;padding:4px 0;width:100%;margin-bottom:8px;}
+.edit-subj{font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;background:#f9fafb;color:#111;width:160px;margin-bottom:8px;}
+.edit-area{min-height:340px;font-size:13px;line-height:1.8;border:1px solid #e5e7eb;border-radius:8px;padding:10px;background:#f9fafb;color:#111;resize:vertical;width:100%;}
+.ai-panel{width:260px;border-left:1px solid #e5e7eb;display:flex;flex-direction:column;background:#fff;}
+.ai-header{padding:10px 12px;border-bottom:1px solid #e5e7eb;font-weight:600;font-size:12px;color:#111;display:flex;justify-content:space-between;align-items:center;}
+.ai-messages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;}
+.ai-msg{max-width:92%;padding:6px 10px;border-radius:8px;font-size:11px;line-height:1.6;}
+.ai-msg.user{align-self:flex-end;background:#eff6ff;color:#1e40af;}
+.ai-msg.assistant{align-self:flex-start;background:#f3f4f6;color:#374151;}
+.ai-input-row{padding:8px;border-top:1px solid #e5e7eb;display:flex;gap:5px;}
+.ai-input{flex:1;padding:6px 8px;font-size:11px;border-radius:6px;border:1px solid #e5e7eb;background:#f9fafb;color:#111;}
+.ai-send{background:#eff6ff;color:#1d4ed8;border:none;border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;font-weight:600;}
+.empty-state{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px;text-align:center;}
+.empty-icon{font-size:40px;}
+.empty-title{font-size:16px;font-weight:600;color:#111;}
+.empty-sub{font-size:13px;color:#6b7280;max-width:260px;line-height:1.6;}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:#0005;display:flex;align-items:center;justify-content:center;z-index:200;}
+.modal{background:#fff;border-radius:12px;padding:24px;width:340px;border:1px solid #e5e7eb;}
+.modal h2{font-size:16px;font-weight:600;margin-bottom:6px;color:#111;}
+.modal p{font-size:12px;color:#6b7280;margin-bottom:16px;line-height:1.6;}
+.modal input,.modal textarea{width:100%;padding:8px 10px;font-size:13px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#111;margin-bottom:10px;}
+.modal textarea{resize:none;height:70px;}
+.modal .error{font-size:12px;color:#dc2626;margin-bottom:8px;}
+.modal .info-box{background:#f9fafb;border-radius:8px;padding:10px 12px;font-size:12px;color:#6b7280;margin-bottom:14px;line-height:1.7;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px;}
+.quick-prompts{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.qp-btn{background:#f9fafb;border:1px solid #e5e7eb;border-radius:5px;padding:5px 8px;font-size:10px;cursor:pointer;color:#6b7280;text-align:left;}
+.export-dropdown{position:absolute;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:4px;z-index:50;min-width:130px;box-shadow:0 4px 12px #0001;}
+.export-item{padding:7px 10px;font-size:12px;cursor:pointer;border-radius:5px;color:#374151;}
+.export-item:hover{background:#f3f4f6;}
+.req-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:10px;}
+.req-name{font-weight:600;font-size:14px;color:#111;}
+.req-email{font-size:12px;color:#6b7280;}
+.req-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+.req-hint{font-size:11px;color:#9ca3af;background:#f9fafb;border-radius:6px;padding:7px 10px;line-height:1.6;margin-top:8px;}
+.status-badge{font-size:10px;padding:3px 10px;border-radius:10px;font-weight:600;}
+.status-pending{background:#fef3c7;color:#92400e;}
+.status-approved{background:#d1fae5;color:#065f46;}
+.status-rejected{background:#fee2e2;color:#991b1b;}
+.success-icon{font-size:36px;margin-bottom:12px;}
+.verify-section{border-top:1px solid #e5e7eb;padding-top:14px;margin-top:4px;}
+mark{border-radius:3px;padding:1px 2px;}
+.annot-span{border-bottom:2px dashed #6366f1;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-header">
+        <span class="sidebar-title">Study Notes</span>
+        <div style="display:flex;gap:4px;" id="sidebar-actions"></div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-free" onclick="switchTab('free')">Free</button>
+        <button class="tab-btn premium" id="tab-premium" onclick="switchTab('premium')">⭐ Premium</button>
+      </div>
+      <input type="text" class="search" placeholder="Search notes..." oninput="renderNoteList()" id="search-input"/>
+    </div>
+    <div class="note-list" id="note-list"></div>
+    <div class="sidebar-bottom" id="sidebar-bottom"></div>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="main-area">
+    <div id="main-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden;"></div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div id="modal-container"></div>
+
+<script>
+const ADMIN_PASS = "Daddup28";
+const ADMIN_EMAIL = "nijesh01abhi@gmail.com";
+const COLORS = ["#FBBF24","#34D399","#60A5FA","#F472B6","#A78BFA"];
+const COLOR_NAMES = ["Yellow","Green","Blue","Pink","Purple"];
+
+let state = {
+  notes: [
+    {id:1,title:"Biology - Cell Structure",subject:"Biology",premium:false,content:"The cell is the basic unit of life.\n\n1. Prokaryotic cells - No nucleus, found in bacteria\n2. Eukaryotic cells - Have a nucleus, found in plants and animals\n\nKey organelles:\n- Mitochondria: powerhouse of the cell\n- Nucleus: contains DNA\n- Ribosome: site of protein synthesis",createdAt:"2024-01-10"},
+    {id:2,title:"Physics - Newton's Laws",subject:"Physics",premium:false,content:"Newton's Three Laws of Motion:\n\n1st Law: An object at rest stays at rest unless acted upon by an external force.\n2nd Law: F = ma\n3rd Law: For every action, there is an equal and opposite reaction.",createdAt:"2024-01-12"},
+    {id:3,title:"Chemistry - Organic Reactions",subject:"Chemistry",premium:true,content:"Organic Chemistry Master Notes\n\nKey Reaction Types:\n1. Substitution (SN1 & SN2)\n2. Elimination (E1 & E2)\n3. Addition reactions\n4. Oxidation/Reduction\n\nImportant reagents and mechanisms for board exams.",createdAt:"2024-01-15"},
+    {id:4,title:"Maths - Integration Formulas",subject:"Maths",premium:true,content:"Complete Integration Formula Sheet\n\n∫xⁿ dx = xⁿ⁺¹/(n+1) + C\n∫eˣ dx = eˣ + C\n∫sin x dx = -cos x + C\n∫cos x dx = sin x + C\n∫1/x dx = ln|x| + C\n\nBy Parts: ∫u dv = uv - ∫v du",createdAt:"2024-01-18"},
+  ],
+  activeNote: null,
+  tab: "free",
+  isAdmin: false,
+  isPremium: false,
+  editing: false,
+  editTitle:"", editSubject:"", editContent:"", editPremium:false,
+  showAI: false,
+  aiMessages: [],
+  aiLoading: false,
+  highlights: {},
+  annotations: {},
+  activeColor: 0,
+  showExport: false,
+  requests: [],
+  approvedEmails: [],
+};
+
+state.activeNote = state.notes[0];
+
+function canAccess(note){ return !note.premium || state.isAdmin || state.isPremium; }
+
+// ---- RENDER ----
+function render(){
+  renderSidebarActions();
+  renderNoteList();
+  renderSidebarBottom();
+  renderMain();
+}
+
+function renderSidebarActions(){
+  const el = document.getElementById("sidebar-actions");
+  let h = "";
+  if(state.isAdmin){
+    const pending = state.requests.filter(r=>r.status==="pending").length;
+    h += `<button class="btn btn-warning" onclick="showRequestsView()">Req${pending>0?" ("+pending+")":""}</button>`;
+    h += `<button class="btn btn-info" onclick="newNote()">+</button>`;
+  }
+  el.innerHTML = h;
+}
+
+function renderNoteList(){
+  const q = document.getElementById("search-input").value.toLowerCase();
+  const filtered = state.notes.filter(n=>{
+    const matchTab = state.tab==="free"?!n.premium:n.premium;
+    const matchSearch = n.title.toLowerCase().includes(q)||n.subject.toLowerCase().includes(q);
+    return matchTab && matchSearch;
+  });
+  const subjects = [...new Set(filtered.map(n=>n.subject))];
+  let h = "";
+  if(filtered.length===0 && state.tab==="premium" && !state.isAdmin && !state.isPremium){
+    h = `<div style="padding:16px 12px;text-align:center;">
+      <div style="font-size:24px;margin-bottom:8px;">⭐</div>
+      <div style="font-size:12px;font-weight:600;color:#111;margin-bottom:4px;">Premium Notes</div>
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:10px;line-height:1.5;">Exclusive notes for premium members.</div>
+      <button class="btn btn-premium-req" style="width:100%;padding:7px;" onclick="showPremiumRequest()">Request Access</button>
+    </div>`;
+  } else {
+    subjects.forEach(subj=>{
+      h += `<div class="subj-label">${subj}</div>`;
+      filtered.filter(n=>n.subject===subj).forEach(note=>{
+        const locked = !canAccess(note);
+        const active = state.activeNote && state.activeNote.id===note.id;
+        h += `<div class="note-item${active?" active":""}${locked?" locked":""}" onclick="${locked?"":"selectNote("+note.id+")"}">
+          <div style="overflow:hidden;flex:1;">
+            <div class="note-name">${locked?"🔒 ":""}${escHtml(note.title)}</div>
+            <div class="note-date">${note.createdAt}</div>
+          </div>
+          ${state.isAdmin?`<button class="del-btn" onclick="event.stopPropagation();deleteNote(${note.id})">×</button>`:""}
+        </div>`;
+      });
+    });
+  }
+  document.getElementById("note-list").innerHTML = h;
+}
+
+function renderSidebarBottom(){
+  const el = document.getElementById("sidebar-bottom");
+  let h = "";
+  if(state.isAdmin){
+    h = `<div style="font-size:11px;color:#9ca3af;flex:1;text-align:center;">Admin mode <button onclick="logoutAdmin()" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:10px;">Logout</button></div>`;
+  } else if(state.isPremium){
+    h = `<div style="font-size:11px;color:#92400e;flex:1;text-align:center;">⭐ Premium member</div>`;
+  } else {
+    h = `<button class="btn btn-admin" style="flex:1;" onclick="showAdminLogin()">Admin</button>
+         <button class="btn btn-premium-req" style="flex:1;" onclick="showPremiumRequest()">⭐ Get Premium</button>`;
+  }
+  el.innerHTML = h;
+}
+
+function renderMain(){
+  const mc = document.getElementById("main-content");
+  const note = state.activeNote;
+  if(!note || !canAccess(note)){
+    renderEmptyState(mc);
+    return;
+  }
+  // Toolbar
+  let toolbar = `<div class="toolbar">
+    <button class="toolbar-btn" onclick="toggleSidebar()">☰</button>`;
+  if(!state.editing){
+    if(state.isAdmin) toolbar += `<button class="toolbar-btn" onclick="startEdit()">✏ Edit</button>`;
+    toolbar += `<span style="font-size:10px;color:#9ca3af;">Highlight:</span>`;
+    COLORS.forEach((c,i)=>{
+      toolbar += `<div class="color-dot${state.activeColor===i?" active":""}" style="background:${c};" onclick="setColor(${i})" title="${COLOR_NAMES[i]}"></div>`;
+    });
+    toolbar += `<button class="toolbar-btn" onclick="applyHighlight()">Apply</button>`;
+    toolbar += `<button class="toolbar-btn" onclick="applyAnnotation()">+ Annotate</button>`;
+    toolbar += `<div style="margin-left:auto;display:flex;gap:5px;position:relative;">`;
+    if(state.isPremium||state.isAdmin){
+      toolbar += `<button class="toolbar-btn${state.showAI?" active":""}" onclick="toggleAI()">AI Chat</button>`;
+    }
+    toolbar += `<div style="position:relative;">
+      <button class="toolbar-btn" onclick="toggleExport()">Export ▾</button>
+      ${state.showExport?`<div class="export-dropdown">
+        <div class="export-item" onclick="exportNote()">Download .txt</div>
+        <div class="export-item" onclick="copyNote()">Copy text</div>
+      </div>`:""}
+    </div></div>`;
+  } else {
+    toolbar += `<button class="btn-save" onclick="saveEdit()">Save</button>
+      <button class="toolbar-btn" onclick="cancelEdit()">Cancel</button>
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#6b7280;margin-left:auto;cursor:pointer;">
+        <input type="checkbox" ${state.editPremium?"checked":""} onchange="state.editPremium=this.checked"> Premium note
+      </label>`;
+  }
+  toolbar += `</div>`;
+
+  // Content
+  let content = `<div class="content-area">`;
+  content += `<div class="note-content">`;
+  if(state.editing){
+    content += `<input class="edit-input" value="${escHtml(state.editTitle)}" oninput="state.editTitle=this.value" placeholder="Title"/>
+      <input class="edit-subj" value="${escHtml(state.editSubject)}" oninput="state.editSubject=this.value" placeholder="Subject"/>
+      <textarea class="edit-area" oninput="state.editContent=this.value">${escHtml(state.editContent)}</textarea>`;
+  } else {
+    content += `<div class="note-title-disp">${escHtml(note.title)}${note.premium?'<span class="badge-premium">⭐ Premium</span>':""}</div>`;
+    content += `<div class="note-meta">${escHtml(note.subject)} · ${note.createdAt}</div>`;
+    content += `<div class="note-body" id="note-body">${getHighlightedHTML(note)}</div>`;
+  }
+  content += `</div>`;
+
+  // AI panel
+  if(state.showAI && !state.editing){
+    content += `<div class="ai-panel">
+      <div class="ai-header">AI Assistant <button onclick="clearAI()" style="background:none;border:none;font-size:10px;color:#9ca3af;cursor:pointer;">Clear</button></div>
+      <div class="ai-messages" id="ai-messages">`;
+    if(state.aiMessages.length===0){
+      content += `<div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:14px;">Ask about this note:
+        <div class="quick-prompts">
+          <button class="qp-btn" onclick="setAIInput('Summarize this')">Summarize this</button>
+          <button class="qp-btn" onclick="setAIInput('Quiz me')">Quiz me</button>
+          <button class="qp-btn" onclick="setAIInput('Key points')">Key points</button>
+        </div></div>`;
+    }
+    state.aiMessages.forEach(m=>{
+      content += `<div class="ai-msg ${m.role}">${escHtml(m.content)}</div>`;
+    });
+    if(state.aiLoading) content += `<div class="ai-msg assistant">Thinking...</div>`;
+    content += `</div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="ai-input" type="text" placeholder="Ask..." onkeydown="if(event.key==='Enter')sendAI()"/>
+        <button class="ai-send" onclick="sendAI()">→</button>
+      </div>
+    </div>`;
+  }
+  content += `</div>`;
+
+  mc.innerHTML = toolbar + content;
+  // scroll AI
+  const aim = document.getElementById("ai-messages");
+  if(aim) aim.scrollTop = aim.scrollHeight;
+}
+
+function renderEmptyState(mc){
+  const note = state.activeNote;
+  let h = `<div class="toolbar"><button class="toolbar-btn" onclick="toggleSidebar()">☰</button></div>`;
+  h += `<div class="empty-state">`;
+  if(state.tab==="premium" && !state.isPremium && !state.isAdmin){
+    h += `<div class="empty-icon">⭐</div>
+      <div class="empty-title">Premium Notes</div>
+      <div class="empty-sub">These notes are for premium members only. Request access and the admin will send you payment details.</div>
+      <button class="btn btn-warning" style="padding:10px 24px;font-size:13px;" onclick="showPremiumRequest()">⭐ Request Premium Access</button>
+      <div style="font-size:11px;color:#9ca3af;">Already paid? <span style="cursor:pointer;color:#2563eb;text-decoration:underline;" onclick="showVerifyAccess()">Verify your access</span></div>`;
+  } else {
+    h += `<div class="empty-icon">📒</div>
+      <div style="font-size:13px;color:#9ca3af;">Select a note to get started</div>`;
+    if(state.isAdmin) h += `<button class="btn btn-info" style="padding:8px 18px;font-size:12px;" onclick="newNote()">+ Create note</button>`;
+  }
+  h += `</div>`;
+  mc.innerHTML = h;
+}
+
+// ---- ACTIONS ----
+function selectNote(id){
+  state.activeNote = state.notes.find(n=>n.id===id);
+  state.editing = false; state.showAI = false; state.aiMessages = []; state.showExport = false;
+  render();
+}
+function switchTab(t){
+  state.tab = t;
+  document.getElementById("tab-free").className = "tab-btn"+(t==="free"?" active":"");
+  document.getElementById("tab-premium").className = "tab-btn premium"+(t==="premium"?" active":"");
+  if(t==="free") state.activeNote = state.notes.find(n=>!n.premium)||null;
+  else state.activeNote = (state.isAdmin||state.isPremium) ? state.notes.find(n=>n.premium)||null : null;
+  state.editing=false; state.showAI=false;
+  render();
+}
+function toggleSidebar(){
+  const s = document.getElementById("sidebar");
+  s.style.display = s.style.display==="none"?"flex":"none";
+}
+function newNote(){
+  const n={id:Date.now(),title:"New Note",subject:"General",premium:state.tab==="premium",content:"Start writing here...",createdAt:new Date().toISOString().slice(0,10)};
+  state.notes.unshift(n);
+  state.activeNote=n; state.editTitle=n.title; state.editSubject=n.subject; state.editContent=n.content; state.editPremium=n.premium;
+  state.editing=true; render();
+}
+function startEdit(){
+  state.editTitle=state.activeNote.title; state.editSubject=state.activeNote.subject;
+  state.editContent=state.activeNote.content; state.editPremium=state.activeNote.premium;
+  state.editing=true; render();
+}
+function saveEdit(){
+  state.notes = state.notes.map(n=>n.id===state.activeNote.id?{...n,title:state.editTitle,subject:state.editSubject,content:state.editContent,premium:state.editPremium}:n);
+  state.activeNote={...state.activeNote,title:state.editTitle,subject:state.editSubject,content:state.editContent,premium:state.editPremium};
+  state.editing=false; render();
+}
+function cancelEdit(){ state.editing=false; render(); }
+function deleteNote(id){
+  state.notes=state.notes.filter(n=>n.id!==id);
+  if(state.activeNote&&state.activeNote.id===id) state.activeNote=state.notes.find(n=>!n.premium)||state.notes[0]||null;
+  render();
+}
+function setColor(i){ state.activeColor=i; render(); }
+function applyHighlight(){
+  const sel=window.getSelection();
+  if(!sel||sel.isCollapsed) return;
+  const text=sel.toString().trim();
+  if(!text||!state.activeNote) return;
+  const key=`${state.activeNote.id}`;
+  if(!state.highlights[key]) state.highlights[key]=[];
+  state.highlights[key].push({text,color:COLORS[state.activeColor]});
+  sel.removeAllRanges(); render();
+}
+function applyAnnotation(){
+  const sel=window.getSelection();
+  if(!sel||sel.isCollapsed) return;
+  const text=sel.toString().trim();
+  if(!text) return;
+  sel.removeAllRanges();
+  showAnnotationModal(text);
+}
+function getHighlightedHTML(note){
+  let html=escHtml(note.content).replace(/\n/g,"<br/>");
+  const key=`${note.id}`;
+  (state.highlights[key]||[]).forEach(h=>{
+    const e=escRegex(escHtml(h.text));
+    html=html.replace(new RegExp(e,"g"),`<mark style="background:${h.color}88;">${escHtml(h.text)}</mark>`);
+  });
+  (state.annotations[key]||[]).forEach(a=>{
+    const e=escRegex(escHtml(a.text));
+    html=html.replace(new RegExp(e,"g"),`<span class="annot-span" title="${escHtml(a.note)}">${escHtml(a.text)}</span>`);
+  });
+  return html;
+}
+function toggleAI(){ state.showAI=!state.showAI; render(); }
+function clearAI(){ state.aiMessages=[]; render(); }
+function setAIInput(t){ document.getElementById("ai-input").value=t; }
+async function sendAI(){
+  const inp=document.getElementById("ai-input");
+  const msg=inp.value.trim();
+  if(!msg||state.aiLoading) return;
+  inp.value="";
+  state.aiMessages.push({role:"user",content:msg});
+  state.aiLoading=true; render();
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,
+        system:`You are a helpful study assistant. The student is viewing a note titled "${state.activeNote?.title}" (${state.activeNote?.subject}).\n\nNote content:\n${state.activeNote?.content}\n\nHelp them understand, quiz, or summarize. Be concise and encouraging.`,
+        messages:state.aiMessages.filter(m=>m.role!=="system")})
+    });
+    const data=await res.json();
+    const reply=data.content?.map(b=>b.text||"").join("")||"Sorry, try again.";
+    state.aiMessages.push({role:"assistant",content:reply});
+  }catch(e){ state.aiMessages.push({role:"assistant",content:"Connection error. Please try again."}); }
+  state.aiLoading=false; render();
+}
+function toggleExport(){ state.showExport=!state.showExport; render(); }
+function exportNote(){
+  const n=state.activeNote;
+  const text=`${n.title}\nSubject: ${n.subject}\nDate: ${n.createdAt}\n\n${n.content}`;
+  const blob=new Blob([text],{type:"text/plain"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=`${n.title}.txt`; a.click();
+  URL.revokeObjectURL(url); state.showExport=false; render();
+}
+function copyNote(){
+  navigator.clipboard.writeText(`${state.activeNote.title}\n\n${state.activeNote.content}`);
+  state.showExport=false; render();
+}
+function logoutAdmin(){ state.isAdmin=false; state.tab="free"; state.activeNote=state.notes.find(n=>!n.premium)||null; render(); }
+
+// ---- MODALS ----
+function showModal(html){ document.getElementById("modal-container").innerHTML=`<div class="modal-bg">${html}</div>`; }
+function closeModal(){ document.getElementById("modal-container").innerHTML=""; }
+
+function showAdminLogin(){
+  showModal(`<div class="modal">
+    <h2>Admin Login</h2>
+    <p>Enter your admin password to manage notes and requests.</p>
+    <input type="password" id="adminPassInput" placeholder="Admin password" onkeydown="if(event.key==='Enter')doAdminLogin()"/>
+    <div class="error" id="adminErr"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-info" style="flex:1;padding:9px;font-size:13px;" onclick="doAdminLogin()">Login</button>
+      <button class="btn btn-admin" style="flex:1;padding:9px;font-size:13px;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>`);
+  setTimeout(()=>document.getElementById("adminPassInput").focus(),50);
+}
+function doAdminLogin(){
+  const p=document.getElementById("adminPassInput").value;
+  if(p===ADMIN_PASS){ state.isAdmin=true; closeModal(); render(); }
+  else document.getElementById("adminErr").textContent="Incorrect password.";
+}
+
+function showPremiumRequest(){
+  showModal(`<div class="modal">
+    <h2>Request Premium Access</h2>
+    <p>Fill in your details. The admin will review your request and share payment details via email.</p>
+    <input type="text" id="reqName" placeholder="Your full name"/>
+    <input type="email" id="reqEmail" placeholder="Your email address"/>
+    <div class="info-box">After submitting, admin will contact you at your email with payment instructions.<br/><strong>Admin contact: ${ADMIN_EMAIL}</strong></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-warning" style="flex:1;padding:9px;font-size:13px;" onclick="submitRequest()">Submit Request</button>
+      <button class="btn btn-admin" style="flex:1;padding:9px;font-size:13px;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>`);
+}
+function submitRequest(){
+  const name=document.getElementById("reqName").value.trim();
+  const email=document.getElementById("reqEmail").value.trim();
+  if(!name||!email) return;
+  state.requests.push({id:Date.now(),name,email,status:"pending"});
+  showModal(`<div class="modal" style="text-align:center;">
+    <div class="success-icon">✅</div>
+    <h2>Request Submitted!</h2>
+    <p>The admin will review your request and email you at <strong>${escHtml(email)}</strong> with payment instructions.<br/><br/>Once you've paid and admin approves, come back to verify access below.</p>
+    <div class="verify-section">
+      <div style="font-size:12px;color:#9ca3af;margin-bottom:8px;">Already paid? Enter your email to verify:</div>
+      <input type="email" id="verifyEmail" placeholder="Your email"/>
+      <div class="error" id="verifyErr"></div>
+      <button class="btn btn-success" style="width:100%;padding:9px;font-size:13px;margin-bottom:8px;" onclick="verifyAccess()">Verify & Unlock</button>
+      <button class="btn btn-admin" style="width:100%;padding:9px;font-size:13px;" onclick="closeModal()">Back to Notes</button>
+    </div>
+  </div>`);
+  renderSidebarActions();
+}
+function showVerifyAccess(){
+  showModal(`<div class="modal">
+    <h2>Verify Premium Access</h2>
+    <p>Enter your email to check if your premium membership has been approved.</p>
+    <input type="email" id="verifyEmail" placeholder="Your email"/>
+    <div class="error" id="verifyErr"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-success" style="flex:1;padding:9px;font-size:13px;" onclick="verifyAccess()">Verify & Unlock</button>
+      <button class="btn btn-admin" style="flex:1;padding:9px;font-size:13px;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>`);
+}
+function verifyAccess(){
+  const email=document.getElementById("verifyEmail").value.trim().toLowerCase();
+  if(state.approvedEmails.includes(email)){
+    state.isPremium=true; closeModal(); switchTab("premium");
+  } else {
+    document.getElementById("verifyErr").textContent="Email not approved yet. Please wait for admin confirmation.";
+  }
+}
+
+function showAnnotationModal(text){
+  showModal(`<div class="modal">
+    <h2>Add Annotation</h2>
+    <div class="info-box">"${escHtml(text.slice(0,60))}${text.length>60?"...":""}"</div>
+    <textarea id="annotText" placeholder="Your annotation..."></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-admin" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-info" onclick="saveAnnotation('${escHtml(text).replace(/'/g,"\\'")}')">Save</button>
+    </div>
+  </div>`);
+  setTimeout(()=>document.getElementById("annotText").focus(),50);
+}
+function saveAnnotation(text){
+  const note=document.getElementById("annotText").value.trim();
+  if(!note) return;
+  const key=`${state.activeNote.id}`;
+  if(!state.annotations[key]) state.annotations[key]=[];
+  state.annotations[key].push({text,note});
+  closeModal(); render();
+}
+
+function showRequestsView(){
+  const pending=state.requests.filter(r=>r.status==="pending").length;
+  let cards="";
+  if(state.requests.length===0) cards=`<div style="text-align:center;color:#9ca3af;margin-top:60px;font-size:14px;">No requests yet.</div>`;
+  state.requests.forEach(r=>{
+    let badge="", actions="";
+    if(r.status==="pending"){
+      badge=`<span class="status-badge status-pending">Pending</span>`;
+      actions=`<button class="btn btn-success" onclick="approveReq(${r.id})">Approve</button>
+               <button class="btn btn-danger" onclick="rejectReq(${r.id})">Reject</button>`;
+    } else if(r.status==="approved"){
+      badge=`<span class="status-badge status-approved">Approved ✓</span>`;
+    } else {
+      badge=`<span class="status-badge status-rejected">Rejected</span>`;
+    }
+    cards+=`<div class="req-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div><div class="req-name">${escHtml(r.name)}</div><div class="req-email">${escHtml(r.email)}</div></div>
+        <div style="display:flex;gap:6px;align-items:center;">${badge}${actions}</div>
+      </div>
+      ${r.status==="pending"?`<div class="req-hint">Send payment details to <strong>${escHtml(r.email)}</strong> from ${ADMIN_EMAIL}. Once paid, approve.</div>`:""}
+    </div>`;
+  });
+  const mc=document.getElementById("main-content");
+  mc.innerHTML=`
+    <div class="toolbar">
+      <button class="toolbar-btn" onclick="render()">← Back</button>
+      <span style="font-weight:600;font-size:14px;color:#111;margin-left:4px;">Premium Requests</span>
+      <span style="margin-left:auto;font-size:12px;color:#9ca3af;">${pending} pending</span>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px 20px;">${cards}</div>`;
+}
+function approveReq(id){
+  const r=state.requests.find(r=>r.id===id);
+  if(r){ state.approvedEmails.push(r.email.toLowerCase()); state.requests=state.requests.map(r=>r.id===id?{...r,status:"approved"}:r); }
+  showRequestsView(); renderSidebarActions();
+}
+function rejectReq(id){ state.requests=state.requests.map(r=>r.id===id?{...r,status:"rejected"}:r); showRequestsView(); }
+
+// ---- UTILS ----
+function escHtml(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function escRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }
+
+render();
+</script>
+</body>
+</html>
